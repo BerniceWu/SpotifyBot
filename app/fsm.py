@@ -1,7 +1,7 @@
 import random
 
 from transitions.extensions import GraphMachine
-from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from . import bot, spotify
 
@@ -107,17 +107,18 @@ class SpotifyBotMachine(GraphMachine):
         text = update.message.text
         chat_id = update.message.chat_id
 
-        keyboard = [[KeyboardButton(self.PLAYING_SYMBOL),
-                     KeyboardButton(self.STOP_SYMBOL)]]
-        reply_markup = ReplyKeyboardMarkup(keyboard)
-
         track = self.recommend_track(text)
         track_info = self.extract_track(track)
 
+        keyboard = [[InlineKeyboardButton(self.PLAYING_SYMBOL, callback_data='play'+track_info['track uri']),
+                     InlineKeyboardButton(self.STOP_SYMBOL, callback_data='stop')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
         bot.send_photo(chat_id=chat_id, photo=track_info["image url"])
-        update.message.reply_text(track_info["title"])
-        update.message.reply_text(track_info["artist"])
-        update.message.reply_text('play or stop', reply_markup=reply_markup)
+        update.message.reply_text(
+            track_info["title"]+'-'+track_info["artist"],
+            reply_markup=reply_markup
+        )
 
         self.advance(update)
 
@@ -138,30 +139,53 @@ class SpotifyBotMachine(GraphMachine):
             "track uri": track_uri
         }
 
-
     def is_pushing_play_button(self, update):
-        text = update.message.text
-        return text == self.PLAYING_SYMBOL
+        data = update.callback_query.data
+        return data.startswith("play")
 
     def is_pushing_stop_button(self, update):
-        text = update.message.text
-        return text == self.STOP_SYMBOL
+        data = update.callback_query.data
+        return data == 'stop'
 
     def is_pushing_pause_button(self, update):
-        text = update.message.text
-        return text == self.PAUSE_SYMBOL
+        data = update.callback_query.data
+        return data.startswith("pause")
 
     def on_enter_playing(self, update):
-        keyboard = [[KeyboardButton(self.PAUSE_SYMBOL),
-                     KeyboardButton(self.STOP_SYMBOL)]]
-        reply_markup = ReplyKeyboardMarkup(keyboard)
-        update.message.reply_text('Playing!', reply_markup=reply_markup)
+        query = update.callback_query
+
+        uri = query.data[3:]
+
+        keyboard = [[InlineKeyboardButton(self.PAUSE_SYMBOL, callback_data='pause'+uri),
+                     InlineKeyboardButton(self.STOP_SYMBOL, callback_data='stop')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        bot.edit_message_text(
+            text=query.message.text,
+            reply_markup=reply_markup,
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id
+        )
 
     def on_enter_pause_music(self, update):
-        keyboard = [[KeyboardButton(self.PLAYING_SYMBOL),
-                     KeyboardButton(self.STOP_SYMBOL)]]
-        reply_markup = ReplyKeyboardMarkup(keyboard)
-        update.message.reply_text('Pause!', reply_markup=reply_markup)
+        query = update.callback_query
+
+        uri = query.data[4:]
+
+        keyboard = [[InlineKeyboardButton(self.PLAYING_SYMBOL,callback_data='play'+uri),
+                     InlineKeyboardButton(self.STOP_SYMBOL, callback_data='stop')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        bot.edit_message_text(
+            text=query.message.text,
+            reply_markup=reply_markup,
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id
+        )
 
     def on_enter_stop_music(self, update):
-        update.message.reply_text('Stop', reply_markup=ReplyKeyboardRemove())
+        query = update.callback_query
+
+        bot.edit_message_text(
+            text=query.message.text,
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id
+        )
