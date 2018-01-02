@@ -154,7 +154,8 @@ class SpotifyBotMachine(GraphMachine):
     def on_enter_playing(self, update):
         query = update.callback_query
 
-        uri = query.data[3:]
+        uri = query.data[4:]
+        spotify.start_playback(uris=[uri])
 
         keyboard = [[InlineKeyboardButton(self.PAUSE_SYMBOL, callback_data='pause'+uri),
                      InlineKeyboardButton(self.STOP_SYMBOL, callback_data='stop')]]
@@ -169,8 +170,8 @@ class SpotifyBotMachine(GraphMachine):
     def on_enter_pause_music(self, update):
         query = update.callback_query
 
-        uri = query.data[4:]
-
+        uri = query.data[5:]
+        spotify.pause_playback()
         keyboard = [[InlineKeyboardButton(self.PLAYING_SYMBOL,callback_data='play'+uri),
                      InlineKeyboardButton(self.STOP_SYMBOL, callback_data='stop')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -184,8 +185,10 @@ class SpotifyBotMachine(GraphMachine):
     def on_enter_stop_music(self, update):
         query = update.callback_query
 
+        spotify.pause_playback()
         bot.edit_message_text(
             text=query.message.text,
             chat_id=query.message.chat_id,
             message_id=query.message.message_id
         )
+        self.advance(update)
