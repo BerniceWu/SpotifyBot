@@ -96,7 +96,7 @@ class SpotifyBotMachine(GraphMachine):
     def on_exit_new_user(self, update):
         update.message.reply_text(
             (
-                "Welcome to Mood Music Station\n"
+                "Welcome to Lonely Night Music Station\n"
                 "Please simply describe your mood in a word or a sentence,"
                 " and I'll recommend a song"
             )
