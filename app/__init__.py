@@ -33,7 +33,10 @@ def create_app(config_name):
         config[config_name].SPOTIFY_CLIENT_ID,
         config[config_name].SPOTIFY_CLIENT_SECRET
     )
-    spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+    spotify = spotipy.Spotify(
+        client_credentials_manager=client_credentials_manager,
+        auth=config[config_name].SPOTIFY_TOKEN
+    )
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)

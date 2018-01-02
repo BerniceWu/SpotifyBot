@@ -1,8 +1,9 @@
+import random
+
 from transitions.extensions import GraphMachine
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 
-
-from . import bot
+from . import bot, spotify
 
 
 class SpotifyBotMachine(GraphMachine):
@@ -110,11 +111,33 @@ class SpotifyBotMachine(GraphMachine):
                      KeyboardButton(self.STOP_SYMBOL)]]
         reply_markup = ReplyKeyboardMarkup(keyboard)
 
-        update.message.reply_text("Singer")
-        bot.send_photo(chat_id=chat_id, photo='https://telegram.org/img/t_logo.png')
+        track = self.recommend_track(text)
+        track_info = self.extract_track(track)
+
+        bot.send_photo(chat_id=chat_id, photo=track_info["image url"])
+        update.message.reply_text(track_info["title"])
+        update.message.reply_text(track_info["artist"])
         update.message.reply_text('play or stop', reply_markup=reply_markup)
 
         self.advance(update)
+
+    def recommend_track(self, text):
+        tracks = spotify.current_user_saved_tracks(limit=50)
+        track = random.sample(tracks['items'], k=1)[0]['track']
+        return track
+
+    def extract_track(self, track):
+        image_url = track['album']['images'][0]['url']
+        artist = track['artists'][0]['name']
+        title = track['name']
+        track_uri = track['uri']
+        return {
+            "image url": image_url,
+            "artist": artist,
+            "title": title,
+            "track uri": track_uri
+        }
+
 
     def is_pushing_play_button(self, update):
         text = update.message.text
