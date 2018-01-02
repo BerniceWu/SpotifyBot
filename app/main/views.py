@@ -4,7 +4,11 @@ from flask import request, send_file
 import telegram
 
 from . import main
-from .. import bot, machine
+from .. import bot
+from ..fsm import SpotifyBotMachine
+
+
+machine = SpotifyBotMachine()
 
 
 @main.route('/hook', methods=['post'])
