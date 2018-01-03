@@ -1,7 +1,8 @@
 import random
 
 from transitions.extensions import GraphMachine
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+import spotipy
 
 from . import bot, spotify
 
@@ -17,7 +18,6 @@ class SpotifyBotMachine(GraphMachine):
             states=[
                 'new_user',
                 'user',
-                'exception',
                 'receive_message',
                 'recommend_song',
                 'playing',
@@ -95,13 +95,17 @@ class SpotifyBotMachine(GraphMachine):
         self.advance(update)
 
     def on_exit_new_user(self, update):
+        text = update.message.text
+        chat_id = update.message.chat_id
         update.message.reply_text(
             (
-                "Welcome to Lonely Night Music Station\n"
-                "Please simply describe your mood in a word or a sentence,"
-                " and I'll recommend a song"
-            )
+                "Welcome to <b>Lonely Night Music Station</b> 📻\n"
+                "I need your company, "
+                "so please talk to me and we'll automatically recommend a song to me 🎼"
+            ),
+            parse_mode=ParseMode.HTML
         )
+        bot.send_photo(chat_id=chat_id, photo='https://stickershop.line-scdn.net/stickershop/v1/product/1593321/LINEStorePC/main@2x.png;compress=true')
 
     def on_enter_receive_message(self, update):
         text = update.message.text
@@ -155,7 +159,11 @@ class SpotifyBotMachine(GraphMachine):
         query = update.callback_query
 
         uri = query.data[4:]
-        spotify.start_playback(uris=[uri])
+
+        try:
+            spotify.start_playback(uris=[uri])
+        except spotipy.client.SpotifyException as e:
+            print(e)
 
         keyboard = [[InlineKeyboardButton(self.PAUSE_SYMBOL, callback_data='pause'+uri),
                      InlineKeyboardButton(self.STOP_SYMBOL, callback_data='stop')]]
@@ -171,7 +179,12 @@ class SpotifyBotMachine(GraphMachine):
         query = update.callback_query
 
         uri = query.data[5:]
-        spotify.pause_playback()
+
+        try:
+            spotify.pause_playback()
+        except spotipy.client.SpotifyException as e:
+            print(e)
+
         keyboard = [[InlineKeyboardButton(self.PLAYING_SYMBOL,callback_data='play'+uri),
                      InlineKeyboardButton(self.STOP_SYMBOL, callback_data='stop')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -185,10 +198,16 @@ class SpotifyBotMachine(GraphMachine):
     def on_enter_stop_music(self, update):
         query = update.callback_query
 
-        spotify.pause_playback()
+        try:
+            spotify.pause_playback()
+        except spotipy.client.SpotifyException as e:
+            print(e)
+
         bot.edit_message_text(
-            text=query.message.text,
+            text="Wooooow, nice music!\n I'm not fell lonely anymore, thank you ( ⁎ ⁍ ̴ ̛ ᴗ ⁍ ̴ ̛ ⁎ ) ".format(query.data),
             chat_id=query.message.chat_id,
-            message_id=query.message.message_id
+            message_id=query.message.message_id,
         )
+        bot.send_photo(chat_id=query.message.chat_id, photo='https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRqgt0ZhbAiBNpBbA5sPFWVrACb1onP8sOxSF4NY7PxrjM20Uf5gg')
+
         self.advance(update)
