@@ -101,7 +101,7 @@ class SpotifyBotMachine(GraphMachine):
             (
                 "Welcome to <b>Lonely Night Music Station</b> 📻\n"
                 "I need your company, "
-                "so please <b>talk to me (´･ω･`)<b> and we'll automatically recommend a song to me 🎼"
+                "so please <b>talk to me (´･ω･`)</b> and we'll automatically recommend a song to me 🎼"
             ),
             parse_mode=ParseMode.HTML
         )
