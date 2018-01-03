@@ -5,7 +5,7 @@
 - Python3
 - Spotify Premium
 - Install Dependency
-    -`pip install -r requirements.txt`
+    - `pip install -r requirements.txt`
 
 ### Secret Data
 - TELEGRAM_API_TOKEN
@@ -35,7 +35,7 @@
 ### Step3
 - And then you can get a song, you can play, pause, stop this song.
 ### Step4
-- It can just control your own spotify!
+- It can only control your own spotify!
 
 ## Author
 [BerniceWu](https://github.com/BerniceWu)
